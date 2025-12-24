@@ -1,0 +1,62 @@
+trigger:
+- main
+
+stages:
+- stage: Build
+  displayName: "Build Stage"
+  jobs:
+  - job: BuildJar
+    displayName: "Build Jar File"
+    pool: 
+      name: ci_build
+      demands:
+      - Agent.Name -equals tomjav
+    steps:
+    - task: Maven@4
+      inputs:
+        mavenPomFile: 'pom.xml'
+        goals: 'install'
+        publishJUnitResults: false
+        javaHomeOption: 'JDKVersion'
+        mavenVersionOption: 'Default'
+        mavenAuthenticateFeed: false
+        effectivePomSkip: false
+        sonarQubeRunAnalysis: false
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Write your commands here.
+          ssh-keyscan -H 44.202.37.87 >> ~/.ssh/known_hosts
+          chmod 400 test1.pem
+          scp -i "test1.pem" $(System.DefaultWorkingDirectory)/target/ROOT.war ubuntu@44.202.37.87:/home/ubuntu/
+          echo "Hello World"
+      displayName: "Copy war file to AWS EC2"
+
+- stage: production
+  dependsOn: Build
+  displayName: "Production"
+  jobs:
+  - deployment: DeployWar
+    displayName: "Deploy the War File"
+    environment: 
+      name: prod
+      resourceType: VirtualMachine
+    strategy:
+     runOnce:
+        deploy:
+          steps:
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: |
+                # Write your commands here
+                sudo systemctl stop tomcat
+                sudo rm -rf /opt/tomcat/webapps/ROOT
+                sudo rm -rf /opt/tomcat/webapps/ROOT.war
+                sudo cp /home/ubuntu/ROOT.war /opt/tomcat/webapps/
+                sudo systemctl daemon-reload
+                sudo systemctl enable tomcat
+                sudo systemctl start tomcat
+                echo 'Hello world'
+            displayName: "Deploying New Application"

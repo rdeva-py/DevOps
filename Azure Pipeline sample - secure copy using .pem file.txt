@@ -1,0 +1,20 @@
+trigger:
+- main
+
+pool:
+  name: test
+
+steps:
+# Step 1: Download the secure file
+- task: DownloadSecureFile@1
+  name: downloadPem
+  inputs:
+    secureFile: 'key.pem'   # name of your secure file in the library
+  displayName: 'Download .pem file'
+
+# - script: |
+#     echo "Secure file path: $(DownloadCert.secureFilePath)"
+
+- powershell: |
+    scp -i "$(downloadPem.secureFilePath)" "$(Build.SourcesDirectory)/file.txt" ubuntu@ip_address:/home/ubuntu/
+  displayName: 'Copy to remote machine'

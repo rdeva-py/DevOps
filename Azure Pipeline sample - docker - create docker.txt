@@ -1,0 +1,9 @@
+trigger:
+- main
+
+pool:
+  name: Test
+
+#build docker image
+steps:
+- script: docker build . --tag image_name:$(Build.BuildNumber)
