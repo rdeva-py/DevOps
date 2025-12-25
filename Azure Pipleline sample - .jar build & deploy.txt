@@ -27,9 +27,9 @@ stages:
         targetType: 'inline'
         script: |
           # Write your commands here.
-          ssh-keyscan -H 44.202.37.87 >> ~/.ssh/known_hosts
+          ssh-keyscan -H ip_address >> ~/.ssh/known_hosts
           chmod 400 test1.pem
-          scp -i "test1.pem" $(System.DefaultWorkingDirectory)/target/ROOT.war ubuntu@44.202.37.87:/home/ubuntu/
+          scp -i "test1.pem" $(System.DefaultWorkingDirectory)/target/ROOT.war user@4IP_address:/home/user/
           echo "Hello World"
       displayName: "Copy war file to AWS EC2"
 
@@ -59,4 +59,5 @@ stages:
                 sudo systemctl enable tomcat
                 sudo systemctl start tomcat
                 echo 'Hello world'
+
             displayName: "Deploying New Application"
